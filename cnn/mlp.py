@@ -248,7 +248,7 @@ def test_mlp(learning_rate=0.1, L1_reg=0., L2_reg=0., D_reg=1.0, BP_reg=0.0, CC_
         configs=(158, 100, 50),
         n_out=2,
         batch_size=batch_size,
-        activation=rectifier
+        activation=rectifier #TODO here
     )
 
     cost = (
@@ -276,7 +276,7 @@ def test_mlp(learning_rate=0.1, L1_reg=0., L2_reg=0., D_reg=1.0, BP_reg=0.0, CC_
     )
 
     opt = Optimizer()
-    updates = opt.adagrad(cost, classifier.params, learning_rate)
+    updates = opt.adam(cost, classifier.params, learning_rate) # TODO:here
 
     # gparams = [T.grad(cost, param) for param in classifier.params]
     # updates = [
@@ -401,9 +401,9 @@ if __name__ == '__main__':
     # args = sys.argv
     # lr = float(args[1])
     # batch_size = int(args[2])
-    lr = 0.001
-    batch_size = 1000
-    l1 = 0
+    lr = 0.0001
+    batch_size = 200
+    l1 = 1e-6
     l2 = 0
     dr = 0
     bp_reg = 0
@@ -413,3 +413,5 @@ if __name__ == '__main__':
              batch_size=batch_size)
     print l1, l2, dr, bp_reg, cc_reg, mf_reg
     # covPol as second layer best 37.74: l1=1e-1, l2=1e-2, dr=0
+    # mlp as second layer baseline:38.46 rectifier, adam
+        # 37.92 1e-08 0 0 0 0 0
