@@ -8,6 +8,11 @@ from logistic_sgd import LogisticRegression, load_data, LinearRegression
 from cnn import LeNetConvPoolLayer
 from optimizers import Optimizer
 
+from matplotlib import pyplot as plt
+
+
+# TODO: EVALUATE THE WEIGHT OF EACH INPUT DATA, TRY WEIGHTED LEARNING
+
 
 def tanh(x):
     return T.tanh(x)
@@ -34,7 +39,18 @@ def params_shape_like(params):
 
 def update_params(param_g, param_s):
     # return (param_g + param_s) / 2
-    return numpy.minimum(param_g, param_s)
+    # zeroIndex = numpy.where(param_g*param_s==0)
+    # ones = numpy.ones_like(param_g)
+    # ones[zeroIndex] = 0
+    mean = (param_g + param_s) / 2
+    # r = mean*ones
+    return mean
+
+def normalizedVector(vec =[]):
+    vec = numpy.array(vec)
+    maxi = numpy.max(vec)
+    mini = numpy.min(vec)
+    return (vec-mini)/(maxi-mini)
 
 
 class HiddenLayer(object):
@@ -312,6 +328,8 @@ def test_mlp(learning_rate=0.1, L1_reg=(), L2_reg=(), D_reg=1.0, BP_reg=0.0, CC_
 
     rng = numpy.random.RandomState(1234)
 
+    activation = tanh
+
     classifier = MLP(
             rng=rng,
             input1=x1,
@@ -319,7 +337,7 @@ def test_mlp(learning_rate=0.1, L1_reg=(), L2_reg=(), D_reg=1.0, BP_reg=0.0, CC_
             configs=(158, 100, 50),
             n_out=2,
             batch_size=batch_size,
-            activation=linear  # TODO here
+            activation=activation
     )
 
     classifier_semantic = MLP(
@@ -329,7 +347,7 @@ def test_mlp(learning_rate=0.1, L1_reg=(), L2_reg=(), D_reg=1.0, BP_reg=0.0, CC_
             configs=(158, 100, 50),
             n_out=2,
             batch_size=batch_size,
-            activation=linear  # TODO here
+            activation=activation
     )
 
     classifier_graphic = MLP(
@@ -339,7 +357,7 @@ def test_mlp(learning_rate=0.1, L1_reg=(), L2_reg=(), D_reg=1.0, BP_reg=0.0, CC_
             configs=(158, 100, 50),
             n_out=2,
             batch_size=batch_size,
-            activation=linear  # TODO here
+            activation=activation
     )
 
     params_semantic = params_shape_like(classifier_semantic.params)
@@ -466,6 +484,12 @@ def test_mlp(learning_rate=0.1, L1_reg=(), L2_reg=(), D_reg=1.0, BP_reg=0.0, CC_
     minibatch_avg_cost_semantic = 0
     minibatch_avg_cost_graphic = 0
 
+    vloss = []
+    vdist = []
+    vbp = []
+    vmf = []
+    vcc = []
+
     # best_script = open('mlp.py')
     while (epoch < n_epochs) and (not done_looping):
         # print classifier.CovPol.params[-1].get_value(True)
@@ -509,6 +533,12 @@ def test_mlp(learning_rate=0.1, L1_reg=(), L2_reg=(), D_reg=1.0, BP_reg=0.0, CC_
                 print 'validation error', this_validation_loss * 100, '%'
                 print 'validation distance', this_validation_distance
                 print 'validation mse bp, cc, mf', this_validation_mse_bp, this_validation_mse_cc, this_validation_mse_mf
+
+                vloss.append(this_validation_loss)
+                vdist.append(this_validation_distance)
+                vbp.append(this_validation_mse_bp)
+                vmf.append(this_validation_mse_mf)
+                vcc.append(this_validation_mse_cc)
 
                 if this_validation_loss < best_validation_loss:
                     if (this_validation_loss < best_validation_loss * improvement_threshold):
@@ -558,6 +588,22 @@ def test_mlp(learning_rate=0.1, L1_reg=(), L2_reg=(), D_reg=1.0, BP_reg=0.0, CC_
                           os.path.split(__file__)[1] +
                           ' ran for %.2fm' % ((end_time - start_time) / 60.))
 
+    vloss = normalizedVector(vloss)
+    vdist = normalizedVector(vdist)
+    vbp = normalizedVector(vbp)
+    vmf = normalizedVector(vmf)
+    vcc = normalizedVector(vcc)
+
+    x = vloss.shape[0]
+    plt.plot(x, vloss, label='loss')
+    plt.plot(x, vdist, label='dist')
+    plt.plot(x, vbp, label='bp')
+    plt.plot(x, vmf, label='mf')
+    plt.plot(x, vcc, label='cc')
+    plt.legend()
+    plt.show()
+
+
 
 if __name__ == '__main__':
     import sys
@@ -566,12 +612,12 @@ if __name__ == '__main__':
     # batch_size = int(args[2])
     lr = 0.001
     batch_size = 1000
-    l1 = (0,0,0,0,0,0,0,0,0,0,0,0)
+    l1 = (5e-5,5e-5,5e-5,5e-5,0,0,0,0,0,0,0,0)
     l2 = (0,0,0,0,0,0,0,0,0,0,0,0)
-    dr = 1
-    bp_reg = 0
-    cc_reg = 0
-    mf_reg = 0
+    dr = 1e-3
+    bp_reg = 1e-3
+    cc_reg = 1e-3
+    mf_reg = 1e-3
     test_mlp(cv=1, learning_rate=lr, L1_reg=l1, L2_reg=l2, D_reg=dr, BP_reg=bp_reg, CC_reg=cc_reg, MF_reg=mf_reg,
              batch_size=batch_size)
     print l1, l2, dr, bp_reg, cc_reg, mf_reg
