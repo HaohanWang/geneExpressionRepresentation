@@ -12,6 +12,8 @@ from optimizers import Optimizer
 from matplotlib import pyplot as plt
 
 
+# TODO: EVALUATE THE WEIGHT OF EACH INPUT DATA, TRY WEIGHTED LEARNING
+
 
 def tanh(x):
     return T.tanh(x)
@@ -44,8 +46,8 @@ def update_params(param_g, param_s):
     # mean = (param_g + param_s) / 2
     # r = mean*ones
     # return r
-
     p = random.random()
+    # print p,
     if p > 0.1:
         return param_s
     else:
@@ -226,14 +228,14 @@ class MLP(object):
         # s = T.dot(m, y) + 1e-3/(T.dot(m, -(y-1))+1e-3)
         return s
 
-    def mse_bp(self, y):
-        return self.regressionLayer_BP.mse(y)
+    def mse_bp(self, y, w=None):
+        return self.regressionLayer_BP.mse(y, w)
 
-    def mse_mf(self, y):
-        return self.regressionLayer_MF.mse(y)
+    def mse_mf(self, y, w=None):
+        return self.regressionLayer_MF.mse(y, w)
 
-    def mse_cc(self, y):
-        return self.regressionLayer_CC.mse(y)
+    def mse_cc(self, y, w=None):
+        return self.regressionLayer_CC.mse(y, w)
 
     def L1_reg_all(self, l=(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)):
         assert len(l) == len(self.params)
@@ -272,10 +274,12 @@ class MLP(object):
 
 def test_mlp(learning_rate=0.1, L1_reg=(), L2_reg=(), D_reg=1.0, BP_reg=0.0, CC_reg=0.0, MF_reg=0.0, rho=0,
              n_epochs=1000, batch_size=1000, cv=1):
-    datasets = load_data(cv)
+    datasets = load_data(cv, True)
 
-    train_set_x1, train_set_x2, train_set_y, train_bp, train_cc, train_mf = datasets[0]
-    valid_set_x1, valid_set_x2, valid_set_y, valid_bp, valid_cc, valid_mf = datasets[1]
+    train_set_x1, train_set_x2, train_set_y, train_bp, train_cc, train_mf, \
+    train_w_bp, train_a_bp, train_w_cc, train_a_cc, train_w_mf, train_a_mf = datasets[0]
+    valid_set_x1, valid_set_x2, valid_set_y, valid_bp, valid_cc, valid_mf, \
+    valid_w_bp, valid_a_bp, valid_w_cc, valid_a_cc, valid_w_mf, valid_a_mf = datasets[1]
 
     n_train_batches = train_set_x1.get_value(borrow=True).shape[0] / batch_size
     n_valid_batches = valid_set_x1.get_value(borrow=True).shape[0] / batch_size
@@ -289,6 +293,13 @@ def test_mlp(learning_rate=0.1, L1_reg=(), L2_reg=(), D_reg=1.0, BP_reg=0.0, CC_
     y_bp = T.matrix('bp')
     y_cc = T.matrix('cc')
     y_mf = T.matrix('mf')
+
+    wbp = T.vector('wbp')
+    abp = T.vector('abp')
+    wcc = T.vector('wcc')
+    acc = T.vector('acc')
+    wmf = T.vector('wmf')
+    amf = T.vector('amf')
 
     hw1 = T.matrix('hw1')
     hb1 = T.dvector('hb1')
@@ -333,8 +344,7 @@ def test_mlp(learning_rate=0.1, L1_reg=(), L2_reg=(), D_reg=1.0, BP_reg=0.0, CC_
 
     rng = numpy.random.RandomState(1234)
 
-    # TODO: here it is
-    activation = rectifier
+    activation = tanh
     opt = Optimizer()
     optFunc = opt.adagrad
 
@@ -372,21 +382,21 @@ def test_mlp(learning_rate=0.1, L1_reg=(), L2_reg=(), D_reg=1.0, BP_reg=0.0, CC_
     params_graphic = params_shape_like(classifier_graphic.params[:4])
     params_update = params_shape_like(classifier.params)
 
-    cost = (
-        classifier.negative_log_likelihood(y)
-        + classifier.L1_reg_all(L1_reg)
-        + classifier.L2_reg_all(L2_reg)
-        + D_reg * classifier.distance(y) / batch_size
-        + BP_reg * classifier.mse_bp(y_bp)
-        + CC_reg * classifier.mse_cc(y_cc)
-        + MF_reg * classifier.mse_mf(y_mf)
-    )
+    # cost = (
+    #     classifier.negative_log_likelihood(y)
+    #     + classifier.L1_reg_all(L1_reg)
+    #     + classifier.L2_reg_all(L2_reg)
+    #     + D_reg * classifier.distance(y) / batch_size
+    #     + BP_reg * classifier.mse_bp(y_bp, abp, wbp)
+    #     + CC_reg * classifier.mse_cc(y_cc, acc, wcc)
+    #     + MF_reg * classifier.mse_mf(y_mf, amf, wmf)
+    # )
 
     cost_semantic = (
         classifier_semantic.negative_log_likelihood(y)
-        + BP_reg * classifier_semantic.mse_bp(y_bp)
-        + CC_reg * classifier_semantic.mse_cc(y_cc)
-        + MF_reg * classifier_semantic.mse_mf(y_mf)
+        + BP_reg * classifier_semantic.mse_bp(y_bp, wbp)
+        + CC_reg * classifier_semantic.mse_cc(y_cc, wcc)
+        + MF_reg * classifier_semantic.mse_mf(y_mf, wmf)
         + classifier_semantic.L1_reg_all(L1_reg)
         + classifier_semantic.L2_reg_all(L2_reg)
         + classifier_semantic.augment([hw1_g, hb1_g, hw2_g, hb2_g], mu, rho)
@@ -427,6 +437,12 @@ def test_mlp(learning_rate=0.1, L1_reg=(), L2_reg=(), D_reg=1.0, BP_reg=0.0, CC_
                 y_bp: train_bp[index * batch_size:(index + 1) * batch_size],
                 y_mf: train_mf[index * batch_size:(index + 1) * batch_size],
                 y_cc: train_cc[index * batch_size:(index + 1) * batch_size],
+                # abp: train_a_bp[index * batch_size:(index + 1) * batch_size],
+                wbp: train_w_bp[index * batch_size:(index + 1) * batch_size],
+                # acc: train_a_cc[index * batch_size:(index + 1) * batch_size],
+                wcc: train_w_cc[index * batch_size:(index + 1) * batch_size],
+                # amf: train_a_mf[index * batch_size:(index + 1) * batch_size],
+                wmf: train_w_mf[index * batch_size:(index + 1) * batch_size],
             }
     )
 
@@ -495,9 +511,9 @@ def test_mlp(learning_rate=0.1, L1_reg=(), L2_reg=(), D_reg=1.0, BP_reg=0.0, CC_
     vmf = []
     vcc = []
 
+    # best_script = open('mlp.py')
     exhausted = True
 
-    # best_script = open('mlp.py')
     while (epoch < n_epochs) and (not done_looping):
         # print classifier.CovPol.params[-1].get_value(True)
         epoch = epoch + 1
@@ -599,13 +615,13 @@ def test_mlp(learning_rate=0.1, L1_reg=(), L2_reg=(), D_reg=1.0, BP_reg=0.0, CC_
                           os.path.split(__file__)[1] +
                           ' ran for %.2fm' % ((end_time - start_time) / 60.))
 
-    # vloss = normalizedVector(vloss)
-    # vdist = normalizedVector(vdist)
-    # vbp = normalizedVector(vbp)
-    # vmf = normalizedVector(vmf)
-    # vcc = normalizedVector(vcc)
-    #
-    # x = vloss.shape[0]
+    vloss = normalizedVector(vloss)
+    vdist = normalizedVector(vdist)
+    vbp = normalizedVector(vbp)
+    vmf = normalizedVector(vmf)
+    vcc = normalizedVector(vcc)
+
+    # x = xrange(vloss.shape[0])
     # plt.plot(x, vloss, label='loss')
     # plt.plot(x, vdist, label='dist')
     # plt.plot(x, vbp, label='bp')

@@ -106,10 +106,13 @@ class LinearRegression(object):
         self.params = [self.W, self.b]
         self.input = input
 
-    def mse(self, y):
-        return ((self.y_pred - y)**2).mean()
+    def mse(self, y, w=None):
+        if w is None:
+            return ((self.y_pred - y)**2).mean()
+        else:
+            return ((T.dot(w, (self.y_pred - y)))**2).mean()  #TODO check here, not sure if it makes sense
 
-def load_data(cv=1):
+def load_data(cv=1, weight=False):
     def shared_dataset(data_x_l, data_y, borrow=True):
         shared_x_L = []
         for data_x in data_x_l:
@@ -140,11 +143,39 @@ def load_data(cv=1):
     tr_mf = numpy.loadtxt('/media/haohanwang/DATA/BEST of Best/State Of Art/PPI4/NetworkHuman2/data/split/MF_train_'+str(cv)+'.txt',delimiter=',')
     te_mf = numpy.loadtxt('/media/haohanwang/DATA/BEST of Best/State Of Art/PPI4/NetworkHuman2/data/split/MF_train_'+str(cv)+'.txt',delimiter=',')
 
-    [train_set_x1, train_set_x2, train_bp, train_cc, train_mf], train_set_y = shared_dataset([trda, trdb, tr_bp, tr_cc, tr_mf], trl)
-    [test_set_x1, test_set_x2, test_bp, test_cc, test_mf], test_set_y = shared_dataset([teda, tedb, te_bp, te_cc, te_mf], tel)
 
-    rval = [(train_set_x1, train_set_x2, train_set_y, train_bp, train_cc, train_mf), (test_set_x1, test_set_x2, test_set_y, test_bp, test_cc, test_mf)]
-    return rval
+    if not weight:
+        [train_set_x1, train_set_x2, train_bp, train_cc, train_mf], train_set_y = shared_dataset([trda, trdb, tr_bp, tr_cc, tr_mf], trl)
+        [test_set_x1, test_set_x2, test_bp, test_cc, test_mf], test_set_y = shared_dataset([teda, tedb, te_bp, te_cc, te_mf], tel)
+
+        rval = [(train_set_x1, train_set_x2, train_set_y, train_bp, train_cc, train_mf), (test_set_x1, test_set_x2, test_set_y, test_bp, test_cc, test_mf)]
+        return rval
+    else:
+        trw_bp = numpy.loadtxt('/media/haohanwang/DATA/BEST of Best/State Of Art/PPI4/NetworkHuman2/data/split/BP_trainWT_'+str(cv)+'.txt', delimiter=',')
+        tew_bp = numpy.loadtxt('/media/haohanwang/DATA/BEST of Best/State Of Art/PPI4/NetworkHuman2/data/split/BP_testWT_'+str(cv)+'.txt', delimiter=',')
+        tra_bp = numpy.loadtxt('/media/haohanwang/DATA/BEST of Best/State Of Art/PPI4/NetworkHuman2/data/split/BP_trainAVL_'+str(cv)+'.txt', delimiter=',')
+        tea_bp = numpy.loadtxt('/media/haohanwang/DATA/BEST of Best/State Of Art/PPI4/NetworkHuman2/data/split/BP_testAVL_'+str(cv)+'.txt', delimiter=',')
+
+        trw_cc = numpy.loadtxt('/media/haohanwang/DATA/BEST of Best/State Of Art/PPI4/NetworkHuman2/data/split/CC_trainWT_'+str(cv)+'.txt', delimiter=',')
+        tew_cc = numpy.loadtxt('/media/haohanwang/DATA/BEST of Best/State Of Art/PPI4/NetworkHuman2/data/split/CC_testWT_'+str(cv)+'.txt', delimiter=',')
+        tra_cc = numpy.loadtxt('/media/haohanwang/DATA/BEST of Best/State Of Art/PPI4/NetworkHuman2/data/split/CC_trainAVL_'+str(cv)+'.txt', delimiter=',')
+        tea_cc = numpy.loadtxt('/media/haohanwang/DATA/BEST of Best/State Of Art/PPI4/NetworkHuman2/data/split/CC_testAVL_'+str(cv)+'.txt', delimiter=',')
+
+        trw_mf = numpy.loadtxt('/media/haohanwang/DATA/BEST of Best/State Of Art/PPI4/NetworkHuman2/data/split/MF_trainWT_'+str(cv)+'.txt', delimiter=',')
+        tew_mf = numpy.loadtxt('/media/haohanwang/DATA/BEST of Best/State Of Art/PPI4/NetworkHuman2/data/split/MF_testWT_'+str(cv)+'.txt', delimiter=',')
+        tra_mf = numpy.loadtxt('/media/haohanwang/DATA/BEST of Best/State Of Art/PPI4/NetworkHuman2/data/split/MF_trainAVL_'+str(cv)+'.txt', delimiter=',')
+        tea_mf = numpy.loadtxt('/media/haohanwang/DATA/BEST of Best/State Of Art/PPI4/NetworkHuman2/data/split/MF_testAVL_'+str(cv)+'.txt', delimiter=',')
+
+        [train_set_x1, train_set_x2, train_bp, train_cc, train_mf, train_w_bp, train_a_bp, train_w_cc, train_a_cc, train_w_mf, train_a_mf], train_set_y = \
+            shared_dataset([trda, trdb, tr_bp, tr_cc, tr_mf, trw_bp, tra_bp, trw_cc, tra_cc, trw_mf, tra_mf], trl)
+        [test_set_x1, test_set_x2, test_bp, test_cc, test_mf, test_w_bp, test_a_bp, test_w_cc, test_a_cc, test_w_mf, test_a_mf], test_set_y =\
+            shared_dataset([teda, tedb, te_bp, te_cc, te_mf, tew_bp, tea_bp, tew_cc, tea_cc, tew_mf, tea_mf], tel)
+
+        rval = [(train_set_x1, train_set_x2, train_set_y, train_bp, train_cc, train_mf,
+                 train_w_bp, train_a_bp, train_w_cc, train_a_cc, train_w_mf, train_a_mf),
+                (test_set_x1, test_set_x2, test_set_y, test_bp, test_cc, test_mf,
+                 test_w_bp, test_a_bp, test_w_cc, test_a_cc, test_w_mf, test_a_mf)]
+        return rval
 
 
 def sgd_optimization_mnist(learning_rate=0.13, n_epochs=1000,
