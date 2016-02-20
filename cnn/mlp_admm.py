@@ -656,9 +656,9 @@ if __name__ == '__main__':
     l1 = (0,0,0,0,0,0,0,0,0,0,0,0)
     l2 = (0,0,0,0,0,0,0,0,0,0,0,0)
     dr = 0
-    bp_reg = 0
-    cc_reg = 0
-    mf_reg = 0
+    bp_reg = 1e-3
+    cc_reg = 1e-3
+    mf_reg = 1e-3
     mu = 0
     rho = 0
     threshold = 0
