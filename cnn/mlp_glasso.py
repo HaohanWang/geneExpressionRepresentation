@@ -282,7 +282,7 @@ def test_mlp(learning_rate=0.1, L1_reg=(), L2_reg=(), D_reg=1.0, BP_reg=0.0, CC_
     valid_set_x1, valid_set_x2, valid_set_y, valid_bp, valid_cc, valid_mf, \
     valid_w_bp, valid_a_bp, valid_w_cc, valid_a_cc, valid_w_mf, valid_a_mf = datasets[1]
     test_set_x1, test_set_x2, test_set_y, test_bp, test_cc, test_mf, \
-    test_w_bp, test_a_bp, test_w_cc, test_a_cc, test_w_mf, test_a_mf = datasets[1]
+    test_w_bp, test_a_bp, test_w_cc, test_a_cc, test_w_mf, test_a_mf = datasets[2]
 
     n_train_batches = train_set_x1.get_value(borrow=True).shape[0] / batch_size
     n_valid_batches = valid_set_x1.get_value(borrow=True).shape[0] / batch_size
@@ -645,7 +645,7 @@ def test_mlp(learning_rate=0.1, L1_reg=(), L2_reg=(), D_reg=1.0, BP_reg=0.0, CC_
                           os.path.split(__file__)[1] +
                           ' ran for %.2fm' % ((end_time - start_time) / 60.))
 
-    vloss = normalizedVector(vloss)
+    vloss = numpy.array(vloss)
     vdist = normalizedVector(vdist)
     vbp = normalizedVector(vbp)
     vmf = normalizedVector(vmf)
@@ -681,4 +681,6 @@ if __name__ == '__main__':
     test_mlp(cv=1, learning_rate=lr, L1_reg=l1, L2_reg=l2, D_reg=dr, BP_reg=bp_reg, CC_reg=cc_reg, MF_reg=mf_reg,
              rho=rho, mu=mu, threshold=threshold,
              batch_size=batch_size)
-    print l1, l2, dr, bp_reg, cc_reg, mf_reg, rho, mu
+    print l1, l2, dr, bp_reg, cc_reg, mf_reg
+    print mu, rho, threshold
+    print lr, batch_size
