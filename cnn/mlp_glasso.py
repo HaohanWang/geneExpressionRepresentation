@@ -38,7 +38,7 @@ def params_shape_like(params):
     return l
 
 
-def update_params(param_g, param_s):
+def update_params(param_g, param_s, threshold=0.0):
     # return (param_g + param_s) / 2
     # zeroIndex = numpy.where(param_g*param_s==0)
     # ones = numpy.ones_like(param_g)
@@ -46,12 +46,12 @@ def update_params(param_g, param_s):
     # mean = (param_g + param_s) / 2
     # r = mean*ones
     # return r
-    p = random.random()
     # print p,
-    if p > 0.1:
+    p = random.random()
+    if p > threshold:
         return param_s
     else:
-        return (param_g + param_s) / 2
+        return (param_g + param_s)/2
 
 def normalizedVector(vec =[]):
     vec = numpy.array(vec)
@@ -272,7 +272,8 @@ class MLP(object):
         return r
 
 
-def test_mlp(learning_rate=0.1, L1_reg=(), L2_reg=(), D_reg=1.0, BP_reg=0.0, CC_reg=0.0, MF_reg=0.0, rho=0., mu=0.,
+def test_mlp(learning_rate=0.1, L1_reg=(), L2_reg=(), D_reg=1.0, BP_reg=0.0, CC_reg=0.0, MF_reg=0.0,
+             rho=0., mu=0., threshold = 0.0,
              n_epochs=1000, batch_size=1000, cv=1):
     datasets = load_data(cv, True)
 
@@ -344,7 +345,7 @@ def test_mlp(learning_rate=0.1, L1_reg=(), L2_reg=(), D_reg=1.0, BP_reg=0.0, CC_
 
     rng = numpy.random.RandomState(1234)
 
-    activation = tanh
+    activation = rectifier
     opt = Optimizer()
     optFunc = opt.adam
 
@@ -544,7 +545,7 @@ def test_mlp(learning_rate=0.1, L1_reg=(), L2_reg=(), D_reg=1.0, BP_reg=0.0, CC_
                 params_semantic[p_index] = classifier_semantic.params[p_index].get_value(True)
                 if p_index < 4:
                     params_graphic[p_index] = classifier_graphic.params[p_index].get_value(True)
-                    params_update[p_index] = update_params(param_g=params_graphic[p_index], param_s=params_semantic[p_index])
+                    params_update[p_index] = update_params(param_g=params_graphic[p_index], param_s=params_semantic[p_index], threshold=threshold)
                 else:
                     params_update[p_index] = params_semantic[p_index]
 
@@ -666,17 +667,18 @@ if __name__ == '__main__':
     # args = sys.argv
     # lr = float(args[1])
     # batch_size = int(args[2])
-    lr = 0.001
-    batch_size = 600
-    l1 = (1e-3,1e-3,1e-3,1e-3,0,0,0,0,0,0,0,0)
+    lr = 0.0001
+    batch_size = 800
+    l1 = (0,0,0,0,0,0,0,0,0,0,0,0)
     l2 = (0,0,0,0,0,0,0,0,0,0,0,0)
-    dr = 1e-8
+    dr = 0
     bp_reg = 1e-3
     cc_reg = 1e-3
     mf_reg = 1e-3
-    rho = 0.5
-    mu = 0.5
+    rho = 0
+    mu = 0
+    threshold = 0
     test_mlp(cv=1, learning_rate=lr, L1_reg=l1, L2_reg=l2, D_reg=dr, BP_reg=bp_reg, CC_reg=cc_reg, MF_reg=mf_reg,
-             rho=rho, mu=mu,
+             rho=rho, mu=mu, threshold=threshold,
              batch_size=batch_size)
     print l1, l2, dr, bp_reg, cc_reg, mf_reg, rho, mu

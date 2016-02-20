@@ -36,7 +36,7 @@ def params_shape_like(params):
     return l
 
 
-def update_params(param_g, param_s, threshold=0):
+def update_params(param_g, param_s, threshold=0.0):
     # return (param_g + param_s) / 2
     # zeroIndex = numpy.where(param_g*param_s==0)
     # ones = numpy.ones_like(param_g)
@@ -49,7 +49,7 @@ def update_params(param_g, param_s, threshold=0):
     if p > threshold:
         return param_s
     else:
-        return param_g
+        return (param_g + param_s)/2
 
 def normalizedVector(vec =[]):
     vec = numpy.array(vec)
@@ -528,7 +528,7 @@ def test_mlp(learning_rate=0.1, L1_reg=(), L2_reg=(), D_reg=1.0, BP_reg=0.0, CC_
                 params_semantic[p_index] = classifier_semantic.params[p_index].get_value(True)
                 if p_index < 4:
                     params_graphic[p_index] = classifier_graphic.params[p_index].get_value(True)
-                    params_update[p_index] = update_params(param_g=params_graphic[p_index], param_s=params_semantic[p_index])
+                    params_update[p_index] = update_params(param_g=params_graphic[p_index], param_s=params_semantic[p_index], threshold=threshold)
                 else:
                     params_update[p_index] = params_semantic[p_index]
 
