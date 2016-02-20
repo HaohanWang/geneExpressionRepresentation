@@ -128,53 +128,72 @@ def load_data(cv=1, weight=False):
     trda = numpy.loadtxt('/media/haohanwang/DATA/BEST of Best/State Of Art/PPI4/NetworkHuman2/data/split/data_train_'+str(cv)+'_a.txt', delimiter=',')
     trdb = numpy.loadtxt('/media/haohanwang/DATA/BEST of Best/State Of Art/PPI4/NetworkHuman2/data/split/data_train_'+str(cv)+'_b.txt', delimiter=',')
 
-    teda = numpy.loadtxt('/media/haohanwang/DATA/BEST of Best/State Of Art/PPI4/NetworkHuman2/data/split/data_test_'+str(cv)+'_a.txt', delimiter=',')
-    tedb = numpy.loadtxt('/media/haohanwang/DATA/BEST of Best/State Of Art/PPI4/NetworkHuman2/data/split/data_test_'+str(cv)+'_b.txt', delimiter=',')
+    teda = numpy.loadtxt('/media/haohanwang/DATA/BEST of Best/State Of Art/PPI4/NetworkHuman2/data/split/data_test_'+str(cv)+'_a.txt', delimiter=',')[:2500,:]
+    tedb = numpy.loadtxt('/media/haohanwang/DATA/BEST of Best/State Of Art/PPI4/NetworkHuman2/data/split/data_test_'+str(cv)+'_b.txt', delimiter=',')[:2500,:]
+
+    vda = numpy.loadtxt('/media/haohanwang/DATA/BEST of Best/State Of Art/PPI4/NetworkHuman2/data/split/data_test_'+str(cv)+'_a.txt', delimiter=',')[2500:,:]
+    vdb = numpy.loadtxt('/media/haohanwang/DATA/BEST of Best/State Of Art/PPI4/NetworkHuman2/data/split/data_test_'+str(cv)+'_b.txt', delimiter=',')[2500:,:]
 
     trl = [int(line.strip()) for line in open('/media/haohanwang/DATA/BEST of Best/State Of Art/PPI4/NetworkHuman2/data/split/labels_train_'+str(cv)+'.txt')]
-    tel = [int(line.strip()) for line in open('/media/haohanwang/DATA/BEST of Best/State Of Art/PPI4/NetworkHuman2/data/split/labels_test_'+str(cv)+'.txt')]
+    tel = [int(line.strip()) for line in open('/media/haohanwang/DATA/BEST of Best/State Of Art/PPI4/NetworkHuman2/data/split/labels_test_'+str(cv)+'.txt')][:2500]
+    vl = [int(line.strip()) for line in open('/media/haohanwang/DATA/BEST of Best/State Of Art/PPI4/NetworkHuman2/data/split/labels_test_'+str(cv)+'.txt')][2500:]
 
     tr_bp = numpy.loadtxt('/media/haohanwang/DATA/BEST of Best/State Of Art/PPI4/NetworkHuman2/data/split/BP_train_'+str(cv)+'.txt', delimiter=',')
-    te_bp = numpy.loadtxt('/media/haohanwang/DATA/BEST of Best/State Of Art/PPI4/NetworkHuman2/data/split/BP_test_'+str(cv)+'.txt',delimiter=',')
+    te_bp = numpy.loadtxt('/media/haohanwang/DATA/BEST of Best/State Of Art/PPI4/NetworkHuman2/data/split/BP_test_'+str(cv)+'.txt',delimiter=',')[:2500,:]
+    v_bp = numpy.loadtxt('/media/haohanwang/DATA/BEST of Best/State Of Art/PPI4/NetworkHuman2/data/split/BP_test_'+str(cv)+'.txt',delimiter=',')[2500:,:]
 
     tr_cc = numpy.loadtxt('/media/haohanwang/DATA/BEST of Best/State Of Art/PPI4/NetworkHuman2/data/split/CC_train_'+str(cv)+'.txt',delimiter=',')
-    te_cc = numpy.loadtxt('/media/haohanwang/DATA/BEST of Best/State Of Art/PPI4/NetworkHuman2/data/split/CC_train_'+str(cv)+'.txt',delimiter=',')
+    te_cc = numpy.loadtxt('/media/haohanwang/DATA/BEST of Best/State Of Art/PPI4/NetworkHuman2/data/split/CC_test_'+str(cv)+'.txt',delimiter=',')[:2500,:]
+    v_cc = numpy.loadtxt('/media/haohanwang/DATA/BEST of Best/State Of Art/PPI4/NetworkHuman2/data/split/CC_test_'+str(cv)+'.txt',delimiter=',')[2500:,:]
 
     tr_mf = numpy.loadtxt('/media/haohanwang/DATA/BEST of Best/State Of Art/PPI4/NetworkHuman2/data/split/MF_train_'+str(cv)+'.txt',delimiter=',')
-    te_mf = numpy.loadtxt('/media/haohanwang/DATA/BEST of Best/State Of Art/PPI4/NetworkHuman2/data/split/MF_train_'+str(cv)+'.txt',delimiter=',')
+    te_mf = numpy.loadtxt('/media/haohanwang/DATA/BEST of Best/State Of Art/PPI4/NetworkHuman2/data/split/MF_test_'+str(cv)+'.txt',delimiter=',')[:2500,:]
+    v_mf = numpy.loadtxt('/media/haohanwang/DATA/BEST of Best/State Of Art/PPI4/NetworkHuman2/data/split/MF_test_'+str(cv)+'.txt',delimiter=',')[2500:,:]
 
 
     if not weight:
         [train_set_x1, train_set_x2, train_bp, train_cc, train_mf], train_set_y = shared_dataset([trda, trdb, tr_bp, tr_cc, tr_mf], trl)
         [test_set_x1, test_set_x2, test_bp, test_cc, test_mf], test_set_y = shared_dataset([teda, tedb, te_bp, te_cc, te_mf], tel)
+        [valid_set_x1, valid_set_x2, valid_bp, valid_cc, valid_mf], valid_set_y = shared_dataset([vda, vdb, v_bp, v_cc, v_mf], tel)
 
-        rval = [(train_set_x1, train_set_x2, train_set_y, train_bp, train_cc, train_mf), (test_set_x1, test_set_x2, test_set_y, test_bp, test_cc, test_mf)]
+        rval = [(train_set_x1, train_set_x2, train_set_y, train_bp, train_cc, train_mf), (test_set_x1, test_set_x2, test_set_y, test_bp, test_cc, test_mf),
+                (valid_set_x1, valid_set_x2, valid_set_y, valid_bp, valid_cc, valid_mf)]
         return rval
     else:
         trw_bp = numpy.loadtxt('/media/haohanwang/DATA/BEST of Best/State Of Art/PPI4/NetworkHuman2/data/split/BP_trainWT_'+str(cv)+'.txt', delimiter=',')
-        tew_bp = numpy.loadtxt('/media/haohanwang/DATA/BEST of Best/State Of Art/PPI4/NetworkHuman2/data/split/BP_testWT_'+str(cv)+'.txt', delimiter=',')
+        tew_bp = numpy.loadtxt('/media/haohanwang/DATA/BEST of Best/State Of Art/PPI4/NetworkHuman2/data/split/BP_testWT_'+str(cv)+'.txt', delimiter=',')[:2500]
+        vw_bp = numpy.loadtxt('/media/haohanwang/DATA/BEST of Best/State Of Art/PPI4/NetworkHuman2/data/split/BP_testWT_'+str(cv)+'.txt', delimiter=',')[2500:]
         tra_bp = numpy.loadtxt('/media/haohanwang/DATA/BEST of Best/State Of Art/PPI4/NetworkHuman2/data/split/BP_trainAVL_'+str(cv)+'.txt', delimiter=',')
-        tea_bp = numpy.loadtxt('/media/haohanwang/DATA/BEST of Best/State Of Art/PPI4/NetworkHuman2/data/split/BP_testAVL_'+str(cv)+'.txt', delimiter=',')
+        tea_bp = numpy.loadtxt('/media/haohanwang/DATA/BEST of Best/State Of Art/PPI4/NetworkHuman2/data/split/BP_testAVL_'+str(cv)+'.txt', delimiter=',')[:2500]
+        va_bp = numpy.loadtxt('/media/haohanwang/DATA/BEST of Best/State Of Art/PPI4/NetworkHuman2/data/split/BP_testAVL_'+str(cv)+'.txt', delimiter=',')[2500:]
 
         trw_cc = numpy.loadtxt('/media/haohanwang/DATA/BEST of Best/State Of Art/PPI4/NetworkHuman2/data/split/CC_trainWT_'+str(cv)+'.txt', delimiter=',')
-        tew_cc = numpy.loadtxt('/media/haohanwang/DATA/BEST of Best/State Of Art/PPI4/NetworkHuman2/data/split/CC_testWT_'+str(cv)+'.txt', delimiter=',')
+        tew_cc = numpy.loadtxt('/media/haohanwang/DATA/BEST of Best/State Of Art/PPI4/NetworkHuman2/data/split/CC_testWT_'+str(cv)+'.txt', delimiter=',')[:2500]
+        vw_cc = numpy.loadtxt('/media/haohanwang/DATA/BEST of Best/State Of Art/PPI4/NetworkHuman2/data/split/CC_testWT_'+str(cv)+'.txt', delimiter=',')[2500:]
         tra_cc = numpy.loadtxt('/media/haohanwang/DATA/BEST of Best/State Of Art/PPI4/NetworkHuman2/data/split/CC_trainAVL_'+str(cv)+'.txt', delimiter=',')
-        tea_cc = numpy.loadtxt('/media/haohanwang/DATA/BEST of Best/State Of Art/PPI4/NetworkHuman2/data/split/CC_testAVL_'+str(cv)+'.txt', delimiter=',')
+        tea_cc = numpy.loadtxt('/media/haohanwang/DATA/BEST of Best/State Of Art/PPI4/NetworkHuman2/data/split/CC_testAVL_'+str(cv)+'.txt', delimiter=',')[:2500]
+        va_cc = numpy.loadtxt('/media/haohanwang/DATA/BEST of Best/State Of Art/PPI4/NetworkHuman2/data/split/CC_testAVL_'+str(cv)+'.txt', delimiter=',')[2500:]
 
         trw_mf = numpy.loadtxt('/media/haohanwang/DATA/BEST of Best/State Of Art/PPI4/NetworkHuman2/data/split/MF_trainWT_'+str(cv)+'.txt', delimiter=',')
-        tew_mf = numpy.loadtxt('/media/haohanwang/DATA/BEST of Best/State Of Art/PPI4/NetworkHuman2/data/split/MF_testWT_'+str(cv)+'.txt', delimiter=',')
+        tew_mf = numpy.loadtxt('/media/haohanwang/DATA/BEST of Best/State Of Art/PPI4/NetworkHuman2/data/split/MF_testWT_'+str(cv)+'.txt', delimiter=',')[:2500]
+        vw_mf = numpy.loadtxt('/media/haohanwang/DATA/BEST of Best/State Of Art/PPI4/NetworkHuman2/data/split/MF_testWT_'+str(cv)+'.txt', delimiter=',')[2500:]
         tra_mf = numpy.loadtxt('/media/haohanwang/DATA/BEST of Best/State Of Art/PPI4/NetworkHuman2/data/split/MF_trainAVL_'+str(cv)+'.txt', delimiter=',')
-        tea_mf = numpy.loadtxt('/media/haohanwang/DATA/BEST of Best/State Of Art/PPI4/NetworkHuman2/data/split/MF_testAVL_'+str(cv)+'.txt', delimiter=',')
+        tea_mf = numpy.loadtxt('/media/haohanwang/DATA/BEST of Best/State Of Art/PPI4/NetworkHuman2/data/split/MF_testAVL_'+str(cv)+'.txt', delimiter=',')[:2500]
+        va_mf = numpy.loadtxt('/media/haohanwang/DATA/BEST of Best/State Of Art/PPI4/NetworkHuman2/data/split/MF_testAVL_'+str(cv)+'.txt', delimiter=',')[2500:]
 
         [train_set_x1, train_set_x2, train_bp, train_cc, train_mf, train_w_bp, train_a_bp, train_w_cc, train_a_cc, train_w_mf, train_a_mf], train_set_y = \
             shared_dataset([trda, trdb, tr_bp, tr_cc, tr_mf, trw_bp, tra_bp, trw_cc, tra_cc, trw_mf, tra_mf], trl)
         [test_set_x1, test_set_x2, test_bp, test_cc, test_mf, test_w_bp, test_a_bp, test_w_cc, test_a_cc, test_w_mf, test_a_mf], test_set_y =\
             shared_dataset([teda, tedb, te_bp, te_cc, te_mf, tew_bp, tea_bp, tew_cc, tea_cc, tew_mf, tea_mf], tel)
+        [valid_set_x1, valid_set_x2, valid_bp, valid_cc, valid_mf, valid_w_bp, valid_a_bp, valid_w_cc, valid_a_cc, valid_w_mf, valid_a_mf], valid_set_y =\
+            shared_dataset([vda, vdb, v_bp, v_cc, v_mf, vw_bp, va_bp, vw_cc, va_cc, vw_mf, va_mf], tel)
 
         rval = [(train_set_x1, train_set_x2, train_set_y, train_bp, train_cc, train_mf,
                  train_w_bp, train_a_bp, train_w_cc, train_a_cc, train_w_mf, train_a_mf),
                 (test_set_x1, test_set_x2, test_set_y, test_bp, test_cc, test_mf,
-                 test_w_bp, test_a_bp, test_w_cc, test_a_cc, test_w_mf, test_a_mf)]
+                 test_w_bp, test_a_bp, test_w_cc, test_a_cc, test_w_mf, test_a_mf),
+                (valid_set_x1, valid_set_x2, valid_set_y, valid_bp, valid_cc, valid_mf,
+                 valid_w_bp, valid_a_bp, valid_w_cc, valid_a_cc, valid_w_mf, valid_a_mf)]
         return rval
 
 

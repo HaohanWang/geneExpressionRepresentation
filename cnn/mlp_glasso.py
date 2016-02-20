@@ -51,13 +51,13 @@ def update_params(param_g, param_s):
     if p > 0.1:
         return param_s
     else:
-        return param_g
+        return (param_g + param_s) / 2
 
 def normalizedVector(vec =[]):
     vec = numpy.array(vec)
     maxi = numpy.max(vec)
-    mini = numpy.min(vec)
-    return (vec-mini)/(maxi-mini)
+    # mini = numpy.min(vec)
+    return vec/maxi
 
 
 class HiddenLayer(object):
@@ -272,7 +272,7 @@ class MLP(object):
         return r
 
 
-def test_mlp(learning_rate=0.1, L1_reg=(), L2_reg=(), D_reg=1.0, BP_reg=0.0, CC_reg=0.0, MF_reg=0.0, rho=0,
+def test_mlp(learning_rate=0.1, L1_reg=(), L2_reg=(), D_reg=1.0, BP_reg=0.0, CC_reg=0.0, MF_reg=0.0, rho=0., mu=0.,
              n_epochs=1000, batch_size=1000, cv=1):
     datasets = load_data(cv, True)
 
@@ -280,6 +280,8 @@ def test_mlp(learning_rate=0.1, L1_reg=(), L2_reg=(), D_reg=1.0, BP_reg=0.0, CC_
     train_w_bp, train_a_bp, train_w_cc, train_a_cc, train_w_mf, train_a_mf = datasets[0]
     valid_set_x1, valid_set_x2, valid_set_y, valid_bp, valid_cc, valid_mf, \
     valid_w_bp, valid_a_bp, valid_w_cc, valid_a_cc, valid_w_mf, valid_a_mf = datasets[1]
+    test_set_x1, test_set_x2, test_set_y, test_bp, test_cc, test_mf, \
+    test_w_bp, test_a_bp, test_w_cc, test_a_cc, test_w_mf, test_a_mf = datasets[1]
 
     n_train_batches = train_set_x1.get_value(borrow=True).shape[0] / batch_size
     n_valid_batches = valid_set_x1.get_value(borrow=True).shape[0] / batch_size
@@ -340,13 +342,11 @@ def test_mlp(learning_rate=0.1, L1_reg=(), L2_reg=(), D_reg=1.0, BP_reg=0.0, CC_
     lwmf_g = T.matrix('lwmf_g')
     lbmf_g = T.dvector('hbmf_g')
 
-    mu = 0
-
     rng = numpy.random.RandomState(1234)
 
     activation = tanh
     opt = Optimizer()
-    optFunc = opt.adagrad
+    optFunc = opt.adam
 
     classifier = MLP(
             rng=rng,
@@ -403,7 +403,7 @@ def test_mlp(learning_rate=0.1, L1_reg=(), L2_reg=(), D_reg=1.0, BP_reg=0.0, CC_
     )
 
     cost_graphic = (
-        classifier_graphic.distance(y) / batch_size
+        D_reg * classifier_graphic.distance(y) / batch_size
         + classifier_graphic.L1_reg_lower(L1_reg[:4])
         + classifier_graphic.L2_reg_lower(L2_reg[:4])
         + classifier_graphic.augment([hw1_s, hb1_s, hw2_s, hb2_s], mu, rho)
@@ -479,6 +479,20 @@ def test_mlp(learning_rate=0.1, L1_reg=(), L2_reg=(), D_reg=1.0, BP_reg=0.0, CC_
             }
     )
 
+    test_model = theano.function(
+            inputs=[index],
+            outputs=(classifier.errors(y), classifier.distance(y) / batch_size,
+                     classifier.mse_bp(y_bp), classifier.mse_cc(y_cc), classifier.mse_mf(y_mf)),
+            givens={
+                x1: test_set_x1[index * batch_size:(index + 1) * batch_size],
+                x2: test_set_x2[index * batch_size:(index + 1) * batch_size],
+                y: test_set_y[index * batch_size:(index + 1) * batch_size],
+                y_bp: test_bp[index * batch_size:(index + 1) * batch_size],
+                y_mf: test_mf[index * batch_size:(index + 1) * batch_size],
+                y_cc: test_cc[index * batch_size:(index + 1) * batch_size]
+            }
+    )
+
     print '... training'
 
     # early-stopping parameters
@@ -512,7 +526,7 @@ def test_mlp(learning_rate=0.1, L1_reg=(), L2_reg=(), D_reg=1.0, BP_reg=0.0, CC_
     vcc = []
 
     # best_script = open('mlp.py')
-    exhausted = True
+    exhausted = False
 
     while (epoch < n_epochs) and (not done_looping):
         # print classifier.CovPol.params[-1].get_value(True)
@@ -569,9 +583,24 @@ def test_mlp(learning_rate=0.1, L1_reg=(), L2_reg=(), D_reg=1.0, BP_reg=0.0, CC_
 
                     best_validation_loss = this_validation_loss
                     best_iter = iter
-                    test_score = best_validation_loss
+
+                    test_losses = [test_model(i) for i in xrange(n_valid_batches)]
+
+                    test_loss, test_distance, mse_bp, mse_cc, mse_mf = zip(*test_losses)
+                    this_test_loss = numpy.mean(test_loss)
+                    this_test_distance = numpy.mean(test_distance)
+
+                    this_test_mse_bp = numpy.mean(mse_bp)
+                    this_test_mse_cc = numpy.mean(mse_cc)
+                    this_test_mse_mf = numpy.mean(mse_mf)
+
+                    test_score = this_test_loss
 
                     print '----BEST Validated MODEL here', test_score * 100, '%----'
+                    print '\t---- Distance:', this_test_distance
+                    print '\t---- BP:', this_test_mse_bp
+                    print '\t---- CC:', this_test_mse_cc
+                    print '\t---- MF:', this_test_mse_mf
 
                 if this_validation_distance < best_validation_distance:
                     if not exhausted:
@@ -621,30 +650,33 @@ def test_mlp(learning_rate=0.1, L1_reg=(), L2_reg=(), D_reg=1.0, BP_reg=0.0, CC_
     vmf = normalizedVector(vmf)
     vcc = normalizedVector(vcc)
 
-    # x = xrange(vloss.shape[0])
-    # plt.plot(x, vloss, label='loss')
-    # plt.plot(x, vdist, label='dist')
-    # plt.plot(x, vbp, label='bp')
-    # plt.plot(x, vmf, label='mf')
-    # plt.plot(x, vcc, label='cc')
-    # plt.legend()
-    # plt.show()
+    x = xrange(vloss.shape[0])
+    plt.plot(x, vloss, label='loss')
+    plt.plot(x, vdist, label='dist')
+    plt.plot(x, vbp, label='bp')
+    plt.plot(x, vmf, label='mf')
+    plt.plot(x, vcc, label='cc')
+    plt.legend()
+    plt.show()
 
 
 
 if __name__ == '__main__':
-    import sys
-    args = sys.argv
-    lr = float(args[1])
-    batch_size = int(args[2])
-    # lr = 0.001
-    # batch_size = 1000
-    l1 = (0,0,0,0,0,0,0,0,0,0,0,0)
+    # import sys
+    # args = sys.argv
+    # lr = float(args[1])
+    # batch_size = int(args[2])
+    lr = 0.001
+    batch_size = 600
+    l1 = (1e-3,1e-3,1e-3,1e-3,0,0,0,0,0,0,0,0)
     l2 = (0,0,0,0,0,0,0,0,0,0,0,0)
-    dr = 1e-3
+    dr = 1e-8
     bp_reg = 1e-3
     cc_reg = 1e-3
     mf_reg = 1e-3
+    rho = 0.5
+    mu = 0.5
     test_mlp(cv=1, learning_rate=lr, L1_reg=l1, L2_reg=l2, D_reg=dr, BP_reg=bp_reg, CC_reg=cc_reg, MF_reg=mf_reg,
+             rho=rho, mu=mu,
              batch_size=batch_size)
-    print l1, l2, dr, bp_reg, cc_reg, mf_reg
+    print l1, l2, dr, bp_reg, cc_reg, mf_reg, rho, mu
