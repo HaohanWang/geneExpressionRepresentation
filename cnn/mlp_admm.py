@@ -384,16 +384,15 @@ def test_mlp(learning_rate=0.1, L1_reg=(), L2_reg=(), D_reg=1.0, BP_reg=0.0, CC_
 
     cost_semantic = (
         classifier_semantic.negative_log_likelihood(y)
-        + BP_reg * classifier_semantic.mse_bp(y_bp)
-        + CC_reg * classifier_semantic.mse_cc(y_cc)
-        + MF_reg * classifier_semantic.mse_mf(y_mf)
         + classifier_semantic.L1_reg_all(L1_reg)
         + classifier_semantic.L2_reg_all(L2_reg)
         + classifier_semantic.augment([hw1_g, hb1_g, hw2_g, hb2_g], mu, rho)
     )
 
     cost_graphic = (
-        D_reg * classifier_graphic.distance(y) / batch_size
+        + BP_reg * classifier_semantic.mse_bp(y_bp)
+        + CC_reg * classifier_semantic.mse_cc(y_cc)
+        + MF_reg * classifier_semantic.mse_mf(y_mf)
         + classifier_graphic.L1_reg_lower(L1_reg[:4])
         + classifier_graphic.L2_reg_lower(L2_reg[:4])
         + classifier_graphic.augment([hw1_s, hb1_s, hw2_s, hb2_s], mu, rho)
@@ -424,9 +423,7 @@ def test_mlp(learning_rate=0.1, L1_reg=(), L2_reg=(), D_reg=1.0, BP_reg=0.0, CC_
                 x1: train_set_x1[index * batch_size: (index + 1) * batch_size],
                 x2: train_set_x2[index * batch_size: (index + 1) * batch_size],
                 y: train_set_y[index * batch_size: (index + 1) * batch_size],
-                y_bp: train_bp[index * batch_size:(index + 1) * batch_size],
-                y_mf: train_mf[index * batch_size:(index + 1) * batch_size],
-                y_cc: train_cc[index * batch_size:(index + 1) * batch_size],
+
             }
     )
 
@@ -437,7 +434,9 @@ def test_mlp(learning_rate=0.1, L1_reg=(), L2_reg=(), D_reg=1.0, BP_reg=0.0, CC_
             givens={
                 x1: train_set_x1[index * batch_size: (index + 1) * batch_size],
                 x2: train_set_x2[index * batch_size: (index + 1) * batch_size],
-                y: train_set_y[index * batch_size: (index + 1) * batch_size]
+                y_bp: train_bp[index * batch_size:(index + 1) * batch_size],
+                y_mf: train_mf[index * batch_size:(index + 1) * batch_size],
+                y_cc: train_cc[index * batch_size:(index + 1) * batch_size],
             }
     )
 
@@ -626,45 +625,46 @@ def test_mlp(learning_rate=0.1, L1_reg=(), L2_reg=(), D_reg=1.0, BP_reg=0.0, CC_
           (best_validation_loss * 100., best_iter + 1, test_score * 100.))
     print >> sys.stderr, ('The code for file ' +
                           os.path.split(__file__)[1] +
-                          ' ran for %.2fm' % ((end_time - start_time) / 60.))
+                          ' ran for %.2fm' % ((end_time - start_time) / 60.)),
+    print >> sys.stderr, ( str(best_validation_loss * 100.) + '%')
 
-    # vloss = normalizedVector(vloss)
-    vloss = numpy.array(vloss)
-    vdist = normalizedVector(vdist)
-    vbp = normalizedVector(vbp)
-    vmf = normalizedVector(vmf)
-    vcc = normalizedVector(vcc)
-
-    x = xrange(vloss.shape[0])
-    plt.plot(x, vloss, label='loss')
-    plt.plot(x, vdist, label='dist')
-    plt.plot(x, vbp, label='bp')
-    plt.plot(x, vmf, label='mf')
-    plt.plot(x, vcc, label='cc')
-    plt.legend()
-    plt.show()
+    # vloss = numpy.array(vloss)
+    # vdist = normalizedVector(vdist)
+    # vbp = normalizedVector(vbp)
+    # vmf = normalizedVector(vmf)
+    # vcc = normalizedVector(vcc)
+    #
+    # x = xrange(vloss.shape[0])
+    # plt.plot(x, vloss, label='loss')
+    # plt.plot(x, vdist, label='dist')
+    # plt.plot(x, vbp, label='bp')
+    # plt.plot(x, vmf, label='mf')
+    # plt.plot(x, vcc, label='cc')
+    # plt.legend()
+    # plt.show()
 
 
 
 if __name__ == '__main__':
-    # import sys
-    # args = sys.argv
-    # lr = float(args[1])
-    # batch_size = int(args[2])
+    #import sys
+    #args = sys.argv
+    #par = float(args[1])
     lr = 0.0001
-    batch_size = 800
+    batch_size = 600
     l1 = (0,0,0,0,0,0,0,0,0,0,0,0)
     l2 = (0,0,0,0,0,0,0,0,0,0,0,0)
     dr = 0
-    bp_reg = 1e-3
-    cc_reg = 1e-3
-    mf_reg = 1e-3
-    mu = 0
+    bp_reg = 0
+    cc_reg = 0
+    mf_reg = 0
+    mu = 1  # best tested is 1.  36.6%
     rho = 0
-    threshold = 0
+    threshold = 0.1
     test_mlp(cv=1, learning_rate=lr, L1_reg=l1, L2_reg=l2, D_reg=dr, BP_reg=bp_reg, CC_reg=cc_reg, MF_reg=mf_reg,
              rho = rho, mu=mu, threshold=threshold,
              batch_size=batch_size)
     print l1, l2, dr, bp_reg, cc_reg, mf_reg
     print mu, rho, threshold
     print lr, batch_size
+
+    # all zeros: 33.6%
