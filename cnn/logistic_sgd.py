@@ -45,7 +45,7 @@ import numpy
 import theano
 import theano.tensor as T
 
-filePath = '/media/haohanwang/DATA/BEST of Best/State Of Art/PPI4/NetworkHuman2/data/'
+filePath = '/media/haohanwang/Data/BEST of Best/State Of Art/PPI4/NetworkHuman2/data/'
 
 class LogisticRegression(object):
     def __init__(self, input, n_in, n_out):
@@ -112,6 +112,10 @@ class LinearRegression(object):
             return ((self.y_pred - y)**2).mean()
         else:
             return ((T.dot(w, (self.y_pred - y)))**2).mean()  #TODO check here, not sure if it makes sense
+
+def load_data_final():
+    data = numpy.loadtxt(filePath+'ge.csv', delimiter=',')
+    return theano.shared(numpy.asarray(data, dtype=theano.config.floatX), borrow=True)
 
 def load_data(cv=1, weight=False):
     def shared_dataset(data_x_l, data_y, borrow=True):

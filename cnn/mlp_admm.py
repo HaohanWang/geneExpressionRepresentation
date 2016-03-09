@@ -11,6 +11,11 @@ from optimizers import Optimizer
 
 from matplotlib import pyplot as plt
 
+import pickle
+
+def save_object(obj, filename):
+    with open(filename, 'wb') as output:
+        pickle.dump(obj, output, pickle.HIGHEST_PROTOCOL)
 
 
 def tanh(x):
@@ -509,6 +514,7 @@ def test_mlp(learning_rate=0.1, L1_reg=(), L2_reg=(), D_reg=1.0, BP_reg=0.0, CC_
     vcc = []
 
     exhausted = True
+    best_params = classifier.params
 
     # best_script = open('mlp.py')
     while (epoch < n_epochs) and (not done_looping):
@@ -591,6 +597,7 @@ def test_mlp(learning_rate=0.1, L1_reg=(), L2_reg=(), D_reg=1.0, BP_reg=0.0, CC_
                             patience = max(patience, iter * patience_increase)
 
                     best_validation_distance = this_validation_distance
+                    best_params = classifier.params
 
                 if this_validation_mse_bp < best_validation_mse_bp:
                     if not exhausted:
@@ -598,6 +605,7 @@ def test_mlp(learning_rate=0.1, L1_reg=(), L2_reg=(), D_reg=1.0, BP_reg=0.0, CC_
                             patience = max(patience, iter * patience_increase)
 
                     best_validation_mse_bp = this_validation_mse_bp
+                    best_params = classifier.params
 
                 if this_validation_mse_cc < best_validation_mse_cc:
                     if not exhausted:
@@ -605,6 +613,7 @@ def test_mlp(learning_rate=0.1, L1_reg=(), L2_reg=(), D_reg=1.0, BP_reg=0.0, CC_
                             patience = max(patience, iter * patience_increase)
 
                     best_validation_mse_cc = this_validation_mse_cc
+                    best_params = classifier.params
 
                 if this_validation_mse_mf < best_validation_mse_mf:
                     if not exhausted:
@@ -612,6 +621,7 @@ def test_mlp(learning_rate=0.1, L1_reg=(), L2_reg=(), D_reg=1.0, BP_reg=0.0, CC_
                             patience = max(patience, iter * patience_increase)
 
                     best_validation_mse_mf = this_validation_mse_mf
+                    best_params = classifier.params
 
             if patience <= iter:
                 done_looping = True
@@ -627,6 +637,7 @@ def test_mlp(learning_rate=0.1, L1_reg=(), L2_reg=(), D_reg=1.0, BP_reg=0.0, CC_
                           os.path.split(__file__)[1] +
                           ' ran for %.2fm' % ((end_time - start_time) / 60.)),
     print >> sys.stderr, ( str(best_validation_loss * 100.) + '%')
+    save_object(best_params, '../model/mlp.'+str(cv)+'.pkl')
 
     # vloss = numpy.array(vloss)
     # vdist = normalizedVector(vdist)
@@ -643,6 +654,12 @@ def test_mlp(learning_rate=0.1, L1_reg=(), L2_reg=(), D_reg=1.0, BP_reg=0.0, CC_
     # plt.legend()
     # plt.show()
 
+def run(parameters):
+    test_mlp(cv=parameters['cv'], learning_rate=parameters['lr'], L1_reg=parameters['l1'], L2_reg=parameters['l2'], D_reg=parameters['dr'],
+             BP_reg=parameters['bp_reg'], CC_reg=parameters['cc_reg'], MF_reg=parameters['mf_reg'],
+             rho=parameters['rho'], mu=parameters['mu'], threshold=parameters['threshold'],
+             batch_size=parameters['batch_size'])
+
 
 
 if __name__ == '__main__':
@@ -657,9 +674,9 @@ if __name__ == '__main__':
     bp_reg = 0
     cc_reg = 0
     mf_reg = 0
-    mu = 1  # best tested is 1.  36.6%
-    rho = 0
-    threshold = 0.1
+    mu = 0  # 1, best tested is 1.  36.6%
+    rho = 0 # 2, best tested is 1, 35.12%
+    threshold = 0
     test_mlp(cv=1, learning_rate=lr, L1_reg=l1, L2_reg=l2, D_reg=dr, BP_reg=bp_reg, CC_reg=cc_reg, MF_reg=mf_reg,
              rho = rho, mu=mu, threshold=threshold,
              batch_size=batch_size)
