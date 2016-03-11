@@ -206,7 +206,6 @@ def load_data(cv=1, weight=False):
                  valid_w_bp, valid_a_bp, valid_w_cc, valid_a_cc, valid_w_mf, valid_a_mf)]
         return rval
 
-
 def sgd_optimization_mnist(learning_rate=0.13, n_epochs=1000,
                            dataset='mnist.pkl.gz',
                            batch_size=600):

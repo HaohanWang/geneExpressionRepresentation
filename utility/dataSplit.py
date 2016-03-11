@@ -65,14 +65,15 @@ import numpy as np
 #     f1_.close()
 #     f2_.close()
 
-# ids = [line.strip() for line in open('../data/ids.txt')]
-#
-# data = np.loadtxt('../data/ge.csv', delimiter=',')
-#
-# ge = {}
-#
-# for i in range(len(ids)):
-#     ge[ids[i]] = data[i,:]
+ids = [line.strip() for line in open('../data/ids.txt')]
+print len(ids)
+data = np.loadtxt('../data/ge.csv', delimiter=',')
+print data.shape
+
+ge = {}
+
+for i in range(len(ids)):
+    ge[ids[i]] = data[i,:]
 #
 # for i in range(5):
 #     t1l = []
@@ -101,3 +102,15 @@ import numpy as np
 #         t2r.append(ge[id2])
 #     np.savetxt('../data/split/data_test_'+str(i+1)+'_a.txt', t2l, delimiter=',')
 #     np.savetxt('../data/split/data_test_'+str(i+1)+'_b.txt', t2r, delimiter=',')
+
+text = [line.strip() for line in open('../data/ids_final.txt')]
+t1l = []
+t1r = []
+for line in text:
+    items = line.split()
+    id1 = items[0]
+    id2 = items[1]
+    t1l.append(ge[id1])
+    t1r.append(ge[id2])
+np.savetxt('../data/split/data_final_a.txt', t1l, delimiter=',')
+np.savetxt('../data/split/data_final_b.txt', t1r, delimiter=',')
