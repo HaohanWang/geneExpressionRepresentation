@@ -155,9 +155,10 @@ class MLP(object):
         out2_a = self.hiddenLayer2.output(out1_a)
         out2_b = self.hiddenLayer2.output(out1_b)
 
-        h_output = [out2_a, out2_b]
-        shp = out2_a.shape
-        h_output = T.reshape(h_output, [shp[0], shp[1] * 2])
+        # h_output = [out2_a, out2_b]
+        # shp = out2_a.shape
+        # h_output = T.reshape(h_output, [shp[0], shp[1] * 2])
+        h_output = T.concatenate([out2_a, out2_b], axis=1) # todo: here is untested
 
         self.out1 = out2_a
         self.out2 = out2_b
@@ -277,7 +278,7 @@ class MLP(object):
 
 def test_mlp(learning_rate=0.1, L1_reg=(), L2_reg=(), D_reg=1.0, BP_reg=0.0, CC_reg=0.0, MF_reg=0.0,
              rho=0.0, mu=0.0, threshold=0.0,
-             n_epochs=1000, batch_size=1000, cv=1):
+             n_epochs=5000, batch_size=1000, cv=1):
     datasets = load_data(cv)
 
     train_set_x1, train_set_x2, train_set_y, train_bp, train_cc, train_mf = datasets[0]
@@ -671,12 +672,12 @@ if __name__ == '__main__':
     l1 = (0,0,0,0,0,0,0,0,0,0,0,0)
     l2 = (0,0,0,0,0,0,0,0,0,0,0,0)
     dr = 0
-    bp_reg = 0
-    cc_reg = 0
-    mf_reg = 0
-    mu = 0  # 1, best tested is 1.  36.6%
-    rho = 0 # 2, best tested is 1, 35.12%
-    threshold = 0
+    bp_reg = 1e-5
+    cc_reg = 1e1
+    mf_reg = 1e-2
+    mu = 1  # 1, best tested is 1.  36.6%
+    rho = 1 # 2, best tested is 1, 35.12%
+    threshold = 1
     test_mlp(cv=1, learning_rate=lr, L1_reg=l1, L2_reg=l2, D_reg=dr, BP_reg=bp_reg, CC_reg=cc_reg, MF_reg=mf_reg,
              rho = rho, mu=mu, threshold=threshold,
              batch_size=batch_size)
