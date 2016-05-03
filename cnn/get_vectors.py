@@ -117,9 +117,7 @@ class MLP(object):
         out2_a = self.hiddenLayer2.output(out1_a)
         out2_b = self.hiddenLayer2.output(out1_b)
 
-        h_output = [out2_a, out2_b]
-        shp = out2_a.shape
-        h_output = T.reshape(h_output, [shp[0], shp[1] * 2])
+        h_output = T.concatenate([out2_a, out2_b], axis=1) # todo: here is untested
 
         self.out1 = out2_a
         self.out2 = out2_b
@@ -254,7 +252,7 @@ def classify_mlp(batch_size=500, output_size=20):
             activation=activation
     )
 
-    params = pickle.load(open('../model/mlp.pkl'))
+    params = pickle.load(open('../model/mlp.1.pkl'))
 
     classifier.params[0].W = theano.shared(
         value=numpy.array(
